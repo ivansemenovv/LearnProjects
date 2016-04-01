@@ -32,5 +32,5 @@ public:
 private:
     ID3D11Buffer* m_pVertexBuffer;
     ID3D11Buffer* m_pModelConstantBuffer;
-    UINT m_vertexCount;
+    size_t m_vertexCount;
 };
