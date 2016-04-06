@@ -39,12 +39,12 @@ void MoveableObject::RotateAxisZ(float step)
     m_zRotation += step;
 }
 
-XMMATRIX MoveableObject::GetTransformation()
+XMMATRIX MoveableObject::GetTransformation(XMMATRIX& originTransformationMatrix)
 {
     XMMATRIX transform;
 
     auto viewTranslationMatrix = XMMatrixTranslation(m_xOffset, m_yOffset, m_zOffset);
-    transform = XMMatrixIdentity() * viewTranslationMatrix * XMMatrixRotationX(m_xRotation) * XMMatrixRotationY(m_yRotation) * XMMatrixRotationZ(m_zRotation);
+    transform = originTransformationMatrix * viewTranslationMatrix * XMMatrixRotationX(m_xRotation) * XMMatrixRotationY(m_yRotation) * XMMatrixRotationZ(m_zRotation);
 
     return transform;
 }

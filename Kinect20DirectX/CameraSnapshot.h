@@ -1,7 +1,9 @@
+#include "NetworkKinectManager.h"
+
 #include <d3d11_1.h>
 #include <directxmath.h>
 #include "MoveableObject.h"
-#include "KinectManager.h"
+
 
 using namespace DirectX;
 
@@ -24,13 +26,16 @@ class  CameraSnapshot : public MoveableObject
 {
 public:
     CameraSnapshot();
-    bool Initialize(ID3D11Device*  pd3dDevice, KinectManager& kinectManager);
+    bool Initialize(ID3D11Device*  pd3dDevice, NetworkKinectManager& kinectManager, XMMATRIX& originTransformationMatrix);
     void Draw(ID3D11DeviceContext* pImmediateContext);
-
+    void DumpTransformationMatrix(std::string& filePath);
     ~CameraSnapshot();
 
 private:
     ID3D11Buffer* m_pVertexBuffer;
     ID3D11Buffer* m_pModelConstantBuffer;
     size_t m_vertexCount;
+    XMMATRIX m_originTransformationMatrix;
+
+    std::string m_serverAddress;
 };

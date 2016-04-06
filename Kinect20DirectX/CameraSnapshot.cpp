@@ -1,5 +1,8 @@
 #pragma once
 #include "CameraSnapshot.h"
+#include <fstream>
+//#include <string>
+//#include <iostream>
 
 
 CameraSnapshot::CameraSnapshot() :
@@ -22,17 +25,24 @@ CameraSnapshot::~CameraSnapshot()
     }
 }
 
-bool CameraSnapshot::Initialize(ID3D11Device*  pd3dDevice, KinectManager & kinectManager)
+bool CameraSnapshot::Initialize(ID3D11Device*  pd3dDevice, NetworkKinectManager & kinectManager, XMMATRIX& originTransformationMatrix)
 {
     if (pd3dDevice == nullptr)
     {
         throw E_INVALIDARG;
     } 
 
+    m_originTransformationMatrix = originTransformationMatrix;
+
+    m_serverAddress = kinectManager.GetKinectAddress();
+
     Voxel* voxels = kinectManager.AcquireVoxelBuffer(&m_vertexCount);
     if (m_vertexCount == 0)
     {
-        kinectManager.ReleaseVoxelBuffer();
+        if (voxels != nullptr)
+        {
+            free(voxels);
+        }
         return false;
     }
     
@@ -44,8 +54,7 @@ bool CameraSnapshot::Initialize(ID3D11Device*  pd3dDevice, KinectManager & kinec
         pVertexArray[i] = voxels[i].AsVertexStructure();
     }
 
-    kinectManager.ReleaseVoxelBuffer();
-
+    free(voxels);
 
     // Bind vertex data
     D3D11_SUBRESOURCE_DATA vertexBufferData = { 0 };
@@ -81,10 +90,7 @@ void CameraSnapshot::Draw(ID3D11DeviceContext * pImmediateContext)
         throw E_INVALIDARG;
     }
 
-    /*XMMATRIX translationMatrix = XMMatrixTranslation(m_xOffset, m_yOffset, m_zOffset);
-    XMMATRIX worldMatrix = translationMatrix * XMMatrixRotationX(m_xRotation) * XMMatrixRotationY(m_yRotation) * XMMatrixRotationZ(m_zRotation);*/
-
-    auto worldMatrix = this->GetTransformation();
+    auto worldMatrix = this->GetTransformation(m_originTransformationMatrix);
 
     // set new world/model matrix
     ModelConstantBuffer cb1;
@@ -98,4 +104,23 @@ void CameraSnapshot::Draw(ID3D11DeviceContext * pImmediateContext)
     pImmediateContext->IASetVertexBuffers(0, 1, &m_pVertexBuffer, &stride, &offset);
 
     pImmediateContext->Draw(m_vertexCount, 0);
+}
+
+
+void CameraSnapshot::DumpTransformationMatrix(std::string& filePath)
+{
+    std::ofstream out(filePath, std::ofstream::ate);
+
+    out << "IP Address of kinect: "<< m_serverAddress << std::endl;
+
+    XMFLOAT4X4 fMatrix;
+    XMStoreFloat4x4(&fMatrix, this->GetTransformation(m_originTransformationMatrix));
+    
+    out << "Transformation Matrix " << std::endl;
+    out << fMatrix._11 << "\t" << fMatrix._12 << "\t" << fMatrix._13 << "\t" << fMatrix._14 << std::endl;
+    out << fMatrix._21 << "\t" << fMatrix._22 << "\t" << fMatrix._23 << "\t" << fMatrix._24 << std::endl;
+    out << fMatrix._31 << "\t" << fMatrix._32 << "\t" << fMatrix._33 << "\t" << fMatrix._34 << std::endl;
+    out << fMatrix._41 << "\t" << fMatrix._42 << "\t" << fMatrix._43 << "\t" << fMatrix._44 << std::endl;
+    out << "-------------------------------------------- " << std::endl;
+    out.close();
 }

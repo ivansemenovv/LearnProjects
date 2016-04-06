@@ -4,6 +4,7 @@
 #include <DirectXMath.h>
 #include <vector>
 #include <thread>
+#include "Voxel.h"
 
 #define RETURN_IF_FAILED(hr) { auto __hr = (hr); if (FAILED(__hr)) { return __hr; } }
 #define THROW_IF_FAILED(hr) { auto __hr = (hr); if (FAILED(__hr)) { throw __hr; } }
@@ -14,58 +15,10 @@ const int height = 424;
 const int colorwidth = 1920;
 const int colorheight = 1080;
 
-using namespace DirectX;
-
-// Used to send per-vertex data to the vertex shader.
-struct VertexPositionColor
-{
-    XMFLOAT3 pos;
-    XMFLOAT3 color;
-    float width;
-};
-
-class Voxel
-{
-public:
-    Voxel() {}
-    Voxel(
-        float x,
-        float y,
-        float z,
-        float width,
-        float r,
-        float g,
-        float b
-        )
-    {
-        m_Position = XMFLOAT3(x, y, z);
-        m_Color = XMFLOAT3(r, g, b);
-        m_Width = width;
-        (
-            XMVectorSet(1, 1, 1, 1),
-            XMVectorSet(0, 0, 0, 1),
-            XMVectorSet(x, y, z, 1)
-            );
-
-    }
-
-    VertexPositionColor AsVertexStructure()
-    {
-        VertexPositionColor v;
-        v.color = m_Color;
-        v.pos = m_Position;
-        v.width = m_Width;
-        return v;
-    }
-    XMFLOAT3 m_Position;
-    XMFLOAT3 m_Color;
-    float m_Width;
-};
-
 
 float CalculateVoxelSize(float nearPlane, float fov, int hRes, int vRes, float voxelDistance);
 
-class KinectManager sealed
+class KinectManager sealed 
 {
 public:
     KinectManager();

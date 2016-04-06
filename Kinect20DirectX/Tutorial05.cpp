@@ -12,23 +12,28 @@
 //
 // Copyright (c) Microsoft Corporation. All rights reserved.
 //--------------------------------------------------------------------------------------
+#pragma once
+
+#define _WINSOCKAPI_
+#define WIN32_LEAN_AND_MEAN
+
+
 #include <windows.h>
 #include <d3d11_1.h>
 #include <d3dcompiler.h>
 #include <directxmath.h>
 #include <directxcolors.h>
 #include "resource.h"
-#include "KinectManager.h"
+//#include "NetworkKinectManager.h"
+//#include "KinectManager.h"
 #include "CameraSnapshot.h"
 #include "ViewCamera.h"
 #include <vector>
 #include <memory>
+#include <fstream>
+
 
 using namespace DirectX;
-
-
-
-
 
 //--------------------------------------------------------------------------------------
 // Global Variables
@@ -56,7 +61,15 @@ ID3D11Buffer*           g_pProjectionConstantBuffer = nullptr;
 ID3D11Buffer*           g_pViewConstantBuffer = nullptr;
 XMMATRIX                g_View;
 XMMATRIX                g_Projection;
-KinectManager           g_Kinect;
+//KinectManager           g_Kinect;
+#define KINECT_NUMBER   0x01
+NetworkKinectManager    g_NetworKinects[KINECT_NUMBER];
+const char*             g_KinectAddresses[] = { "127.0.0.1", "127.0.0.1", "127.0.0.1" };
+XMMATRIX                g_originTransformationMatrices[] = {
+    XMMatrixIdentity(),
+    XMMatrixIdentity() * XMMatrixRotationY(2 * XM_PI / 3),
+    XMMatrixIdentity() * XMMatrixRotationY(2 * 2 * XM_PI / 3),
+};
 
 float yRotationView = 0.0f;
 float xRotationView = 0.0f;
@@ -65,8 +78,8 @@ float yOffsetView = 0.0f;
 float xOffsetView = 0.0f;
 float zOffsetView = 0.0f;
 
-float rotationStep = 0.00125f;
-float translationStep = 0.0125f;
+float rotationStep = 0.125f;
+float translationStep = 0.125f;
 
 bool captureFrameCamera1 = false;
 
@@ -150,7 +163,7 @@ HRESULT InitWindow( HINSTANCE hInstance, int nCmdShow )
 
     // Create window
     g_hInst = hInstance;
-    RECT rc = { 0, 0, 800, 600 };
+    RECT rc = { 0, 0, 1920, 1080 };
     AdjustWindowRect( &rc, WS_OVERLAPPEDWINDOW, FALSE );
     g_hWnd = CreateWindow( L"TutorialWindowClass", L"Direct3D 11 Tutorial 5",
                            WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
@@ -211,7 +224,10 @@ HRESULT InitDevice()
 {
     HRESULT hr = S_OK;
 
-    RETURN_IF_FAILED(g_Kinect.Initialize(1));
+    for (int i = 0; i < KINECT_NUMBER; i++)
+    {
+        g_NetworKinects[i].InititializeClient(g_KinectAddresses[i]);
+    }
 
     RECT rc;
     GetClientRect( g_hWnd, &rc );
@@ -460,7 +476,7 @@ HRESULT InitDevice()
     g_pImmediateContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_POINTLIST );
 
     // Initialize the view matrix
-    XMVECTOR Eye = XMVectorSet( 0.5f, 0.3f, -1.3f, 1.0f );
+    XMVECTOR Eye = XMVectorSet( 0.5f, 0.3f, 1.3f, 1.0f );
     XMVECTOR At = XMVectorSet( 0.0f, 0.0f, 0.0f, 1.0f );
     XMVECTOR Up = XMVectorSet( 0.0f, 1.0f, 0.0f, 1.0f );
     
@@ -534,6 +550,20 @@ MoveableObject* GetActiveObject()
         }
     }
     return viewCamera.get();
+}
+
+void DumpTransformationMatrices()
+{
+    std::string fileName = "G:\\dump.txt";
+    
+    // cleanup file before writing
+    std::ofstream out(fileName, std::ofstream::trunc);
+    out.close();
+
+    for (auto snapshot = capturedSnapshots.begin(); snapshot != capturedSnapshots.end(); snapshot++)
+    {
+        snapshot->get()->DumpTransformationMatrix(fileName);
+    }
 }
 
 HRESULT HandleKeyDown(WPARAM wParam)
@@ -615,7 +645,12 @@ HRESULT HandleKeyDown(WPARAM wParam)
         captureFrameCamera1 = true;
 
         break;
-
+    
+    case VK_ESCAPE:
+        
+        DumpTransformationMatrices();
+       
+        break;
         // Process other non-character keystrokes. 
 
     default:
@@ -686,16 +721,24 @@ void Render()
         snapshot->get()->Draw(g_pImmediateContext);
     }
     
-    std::shared_ptr<CameraSnapshot> dynamicCamerasnapshot(new CameraSnapshot());
-    if (dynamicCamerasnapshot->Initialize(g_pd3dDevice, g_Kinect))
+    // will render dynamic snapshots only if we didn't capture any of them
+    if (capturedSnapshots.size() == 0)
     {
-        dynamicCamerasnapshot->Draw(g_pImmediateContext);
-        if (captureFrameCamera1)
+        for (int i = 0; i < KINECT_NUMBER; i++)
         {
-            capturedSnapshots.push_back(dynamicCamerasnapshot);
-            moveableObjects.push_back(dynamicCamerasnapshot);
-            captureFrameCamera1 = false;
+            std::shared_ptr<CameraSnapshot> dynamicCamerasnapshot(new CameraSnapshot());
+            if (dynamicCamerasnapshot->Initialize(g_pd3dDevice, g_NetworKinects[i], g_originTransformationMatrices[i]))
+            {
+                dynamicCamerasnapshot->Draw(g_pImmediateContext);
+                if (captureFrameCamera1)
+                {
+                    capturedSnapshots.push_back(dynamicCamerasnapshot);
+                    moveableObjects.push_back(dynamicCamerasnapshot);
+                }
+            }
         }
+
+        if (captureFrameCamera1) captureFrameCamera1 = false;
     }
 
     g_pSwapChain->Present( 0, 0 );

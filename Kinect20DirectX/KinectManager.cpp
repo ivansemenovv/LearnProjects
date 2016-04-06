@@ -1,3 +1,4 @@
+
 #include "KinectManager.h"
 
 KinectManager::KinectManager()

@@ -39,7 +39,7 @@ void ViewCamera::Update(ID3D11DeviceContext * pImmediateContext)
         throw E_INVALIDARG;
     }
 
-    auto viewWorldMatrix = m_viewMatrix * this->GetTransformation();
+    auto viewWorldMatrix = this->GetTransformation(m_viewMatrix);
 
     // setup projection matrix
     ViewConstantBuffer cb1;

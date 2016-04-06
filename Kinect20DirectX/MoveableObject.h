@@ -18,7 +18,7 @@ public:
     void RotateAxisZ(float step);
 
 protected:
-    XMMATRIX GetTransformation();
+    XMMATRIX GetTransformation(XMMATRIX& originTransformationMatrix);
 
 private:
     float m_xRotation = 0.0f;

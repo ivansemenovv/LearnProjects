@@ -16,6 +16,7 @@
     <ClCompile Include="CameraSnapshot.cpp" />
     <ClCompile Include="MoveableObject.cpp" />
     <ClCompile Include="ViewCamera.cpp" />
+    <ClCompile Include="NetworkKinectManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CLInclude Include="resource.h">
@@ -28,6 +29,8 @@
     <ClInclude Include="CameraSnapshot.h" />
     <ClInclude Include="MoveableObject.h" />
     <ClInclude Include="ViewCamera.h" />
+    <ClInclude Include="NetworkKinectManager.h" />
+    <ClInclude Include="Voxel.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Tutorial05.fx">
