@@ -26,8 +26,9 @@
 #include "resource.h"
 //#include "NetworkKinectManager.h"
 //#include "KinectManager.h"
-#include "CameraSnapshot.h"
+//#include "CameraSnapshot.h"
 #include "ViewCamera.h"
+#include "Axis.h"
 #include <vector>
 #include <memory>
 #include <fstream>
@@ -61,25 +62,35 @@ ID3D11Buffer*           g_pProjectionConstantBuffer = nullptr;
 ID3D11Buffer*           g_pViewConstantBuffer = nullptr;
 XMMATRIX                g_View;
 XMMATRIX                g_Projection;
+Axis                    g_Axis;
+
+XMMATRIX firstKinect = {
+    0.999229,    0,    -0.0392598,    0,
+    -0.00154133,    0.999229,    -0.0392295,    0,
+    0.0392295,    0.0392598,    0.998459,    0,
+    -0.00615183,    0.028416,    0.161817,    1,
+};
+
+XMMATRIX secondKinect = {
+    -1.19209e-07,    0,    -1,    0,
+    0,    1,    0,    0,
+    1,    0,    -1.19209e-07,    0,
+    1.85,    -0.025,    -1.0875,    1,
+};
+
 //KinectManager           g_Kinect;
-#define KINECT_NUMBER   0x01
+#define KINECT_NUMBER   0x02
 NetworkKinectManager    g_NetworKinects[KINECT_NUMBER];
-const char*             g_KinectAddresses[] = { "127.0.0.1", "127.0.0.1", "127.0.0.1" };
+const char*             g_KinectAddresses[] = { "127.0.0.1", "10.124.134.109", "127.0.0.1" };
 XMMATRIX                g_originTransformationMatrices[] = {
-    XMMatrixIdentity(),
-    XMMatrixIdentity() * XMMatrixRotationY(2 * XM_PI / 3),
+    XMMatrixIdentity() * firstKinect,
+    XMMatrixIdentity() * secondKinect /* XMMatrixRotationY(XM_PI / 2)*/,
     XMMatrixIdentity() * XMMatrixRotationY(2 * 2 * XM_PI / 3),
 };
 
-float yRotationView = 0.0f;
-float xRotationView = 0.0f;
-float zRotationView = 0.0f;
-float yOffsetView = 0.0f;
-float xOffsetView = 0.0f;
-float zOffsetView = 0.0f;
 
-float rotationStep = 0.125f;
-float translationStep = 0.125f;
+float rotationStep = 0.0125f;
+float translationStep = 0.0125f;
 
 bool captureFrameCamera1 = false;
 
@@ -87,6 +98,8 @@ std::shared_ptr<ViewCamera> viewCamera(new ViewCamera());
 std::vector<std::shared_ptr<CameraSnapshot>> capturedSnapshots;
 std::vector<std::shared_ptr<MoveableObject>> moveableObjects;
 short activeMoveableObject = 0;
+
+
 
 
 
@@ -472,22 +485,24 @@ HRESULT InitDevice()
 
     // Create vertex buffer
 
-    // Set primitive topology
-    g_pImmediateContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_POINTLIST );
-
+    
     // Initialize the view matrix
-    XMVECTOR Eye = XMVectorSet( 0.5f, 0.3f, 1.3f, 1.0f );
+    XMVECTOR Eye = XMVectorSet( 0.0f, 0.0f, 1.3f, 1.0f );
     XMVECTOR At = XMVectorSet( 0.0f, 0.0f, 0.0f, 1.0f );
     XMVECTOR Up = XMVectorSet( 0.0f, 1.0f, 0.0f, 1.0f );
     
     auto view = XMMatrixLookToRH(Eye, XMVectorSet(0, 0, -1, 1), Up);
     
     viewCamera->Initialize(view, g_pd3dDevice);
+    
     // camera is always 0 moveable object
     moveableObjects.push_back(viewCamera);
 
     // Initialize the projection matrix
     g_Projection = XMMatrixPerspectiveFovRH( XM_PIDIV2, width / (FLOAT)height, 0.01f, 100.0f );
+
+    // Initialize axises
+    g_Axis.Initialize(g_pd3dDevice);
 
     // Create the constant buffer for projection matrix
     D3D11_BUFFER_DESC projectionBufferDesc = { 0 };
@@ -497,18 +512,14 @@ HRESULT InitDevice()
     projectionBufferDesc.CPUAccessFlags = 0;
     RETURN_IF_FAILED(g_pd3dDevice->CreateBuffer(&projectionBufferDesc, nullptr, &g_pProjectionConstantBuffer));
 
-    // setup projection matrix
+    // setup projection matrix for geometry shader
     ProjectionConstantBuffer cb1;
     XMStoreFloat4x4(&cb1.projection, XMMatrixTranspose(g_Projection));
     g_pImmediateContext->UpdateSubresource(g_pProjectionConstantBuffer, 0, nullptr, &cb1, 0, 0);
     g_pImmediateContext->GSSetConstantBuffers(0, 1, &g_pProjectionConstantBuffer);
 
     // setup shaders
-    g_pImmediateContext->VSSetShader(g_pVertexShader, nullptr, 0);
     g_pImmediateContext->PSSetShader(g_pPixelShader, nullptr, 0);
-    g_pImmediateContext->GSSetShader(g_pGeometryShader, nullptr, 0);
-
-    
 
     return S_OK;
 }
@@ -554,15 +565,15 @@ MoveableObject* GetActiveObject()
 
 void DumpTransformationMatrices()
 {
-    std::string fileName = "G:\\dump.txt";
+    std::string dirPath = "G:\\";
     
     // cleanup file before writing
-    std::ofstream out(fileName, std::ofstream::trunc);
+    std::ofstream out(dirPath, std::ofstream::trunc);
     out.close();
 
     for (auto snapshot = capturedSnapshots.begin(); snapshot != capturedSnapshots.end(); snapshot++)
     {
-        snapshot->get()->DumpTransformationMatrix(fileName);
+        snapshot->get()->DumpTransformationMatrix(dirPath);
     }
 }
 
@@ -715,7 +726,14 @@ void Render()
     // Update Camera view
     viewCamera->Update(g_pImmediateContext);
 
-    // Draw 
+    g_Axis.Draw(g_pImmediateContext, viewCamera->GetViewMatrix(), g_Projection);
+
+    // Set primitive topology
+    g_pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
+    g_pImmediateContext->VSSetShader(g_pVertexShader, nullptr, 0);
+    g_pImmediateContext->GSSetShader(g_pGeometryShader, nullptr, 0);
+
+    // draw 
     for (auto snapshot = capturedSnapshots.begin(); snapshot != capturedSnapshots.end(); snapshot++)
     {
         snapshot->get()->Draw(g_pImmediateContext);
@@ -726,14 +744,14 @@ void Render()
     {
         for (int i = 0; i < KINECT_NUMBER; i++)
         {
-            std::shared_ptr<CameraSnapshot> dynamicCamerasnapshot(new CameraSnapshot());
-            if (dynamicCamerasnapshot->Initialize(g_pd3dDevice, g_NetworKinects[i], g_originTransformationMatrices[i]))
+            std::shared_ptr<CameraSnapshot> dynamiccamerasnapshot(new CameraSnapshot());
+            if (dynamiccamerasnapshot->Initialize(g_pd3dDevice, g_NetworKinects[i], g_originTransformationMatrices[i]))
             {
-                dynamicCamerasnapshot->Draw(g_pImmediateContext);
+                dynamiccamerasnapshot->Draw(g_pImmediateContext);
                 if (captureFrameCamera1)
                 {
-                    capturedSnapshots.push_back(dynamicCamerasnapshot);
-                    moveableObjects.push_back(dynamicCamerasnapshot);
+                    capturedSnapshots.push_back(dynamiccamerasnapshot);
+                    moveableObjects.push_back(dynamiccamerasnapshot);
                 }
             }
         }

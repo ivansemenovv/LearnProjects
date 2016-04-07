@@ -99,7 +99,7 @@ void KinectManager::ThreadProc()
                 //OutputDebugStringW(L"Camera point is out of range");
                 continue;
             }
-            if (cameraPoint.Z >= 2) continue;
+            //if (cameraPoint.Z >= 2) continue;
             int colorIndex = (int)colorPoint.X + colorwidth*(int)colorPoint.Y;
             tempReadVoxelBuffer[i] =
                 Voxel(

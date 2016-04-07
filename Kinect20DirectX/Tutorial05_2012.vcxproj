@@ -456,6 +456,7 @@
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Axis.cpp" />
     <ClCompile Include="CameraSnapshot.cpp" />
     <ClCompile Include="KinectManager.cpp" />
     <ClCompile Include="MoveableObject.cpp" />
@@ -464,6 +465,7 @@
     <ClCompile Include="ViewCamera.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Axis.h" />
     <ClInclude Include="CameraSnapshot.h" />
     <ClInclude Include="KinectManager.h" />
     <ClInclude Include="MoveableObject.h" />

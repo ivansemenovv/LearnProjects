@@ -28,7 +28,7 @@ public:
     CameraSnapshot();
     bool Initialize(ID3D11Device*  pd3dDevice, NetworkKinectManager& kinectManager, XMMATRIX& originTransformationMatrix);
     void Draw(ID3D11DeviceContext* pImmediateContext);
-    void DumpTransformationMatrix(std::string& filePath);
+    void DumpTransformationMatrix(std::string& dirPath);
     ~CameraSnapshot();
 
 private:

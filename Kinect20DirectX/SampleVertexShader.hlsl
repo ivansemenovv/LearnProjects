@@ -1,4 +1,11 @@
 // Per-vertex data used as input to the vertex shader.
+cbuffer ConstantBuffer : register(b0)
+{
+    matrix World;
+    matrix View;
+    matrix Projection;
+}
+
 struct VertexShaderInput
 {
 	float3 pos : POSITION;
@@ -26,4 +33,21 @@ GeometryShaderInput main(VertexShaderInput input)
     output.width = input.width;
 
 	return output;
+}
+
+
+//--------------------------------------------------------------------------------------
+// Vertex Shader for Axis
+//--------------------------------------------------------------------------------------
+GeometryShaderInput AxisVertexShader(VertexShaderInput input)
+{
+    GeometryShaderInput output = (GeometryShaderInput)0;
+    output.pos = float4(input.pos, 1.0f);
+    output.pos = mul(output.pos, World);
+    output.pos = mul(output.pos, View);
+    output.pos = mul(output.pos, Projection);
+    output.color = input.color;
+    output.width = input.width;
+
+    return output;
 }

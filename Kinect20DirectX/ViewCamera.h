@@ -18,6 +18,11 @@ public:
 
     void Update(ID3D11DeviceContext* pImmediateContext);
 
+    XMMATRIX GetViewMatrix()
+    {
+        return this->GetTransformation(m_viewMatrix);
+    }
+
 private: 
     XMMATRIX m_viewMatrix;
     ID3D11Buffer* m_pViewConstantBuffer;

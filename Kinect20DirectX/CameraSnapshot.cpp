@@ -107,9 +107,9 @@ void CameraSnapshot::Draw(ID3D11DeviceContext * pImmediateContext)
 }
 
 
-void CameraSnapshot::DumpTransformationMatrix(std::string& filePath)
+void CameraSnapshot::DumpTransformationMatrix(std::string& dirPath)
 {
-    std::ofstream out(filePath, std::ofstream::ate);
+    std::ofstream out(dirPath + m_serverAddress + ".txt", std::ofstream::ate);
 
     out << "IP Address of kinect: "<< m_serverAddress << std::endl;
 
@@ -117,10 +117,10 @@ void CameraSnapshot::DumpTransformationMatrix(std::string& filePath)
     XMStoreFloat4x4(&fMatrix, this->GetTransformation(m_originTransformationMatrix));
     
     out << "Transformation Matrix " << std::endl;
-    out << fMatrix._11 << "\t" << fMatrix._12 << "\t" << fMatrix._13 << "\t" << fMatrix._14 << std::endl;
-    out << fMatrix._21 << "\t" << fMatrix._22 << "\t" << fMatrix._23 << "\t" << fMatrix._24 << std::endl;
-    out << fMatrix._31 << "\t" << fMatrix._32 << "\t" << fMatrix._33 << "\t" << fMatrix._34 << std::endl;
-    out << fMatrix._41 << "\t" << fMatrix._42 << "\t" << fMatrix._43 << "\t" << fMatrix._44 << std::endl;
+    out << fMatrix._11 << ",    " << fMatrix._12 << ",    " << fMatrix._13 << ",    " << fMatrix._14 << ",    "<< std::endl;
+    out << fMatrix._21 << ",    " << fMatrix._22 << ",    " << fMatrix._23 << ",    " << fMatrix._24 << ",    " << std::endl;
+    out << fMatrix._31 << ",    " << fMatrix._32 << ",    " << fMatrix._33 << ",    " << fMatrix._34 << ",    " << std::endl;
+    out << fMatrix._41 << ",    " << fMatrix._42 << ",    " << fMatrix._43 << ",    " << fMatrix._44 << ",    " << std::endl;
     out << "-------------------------------------------- " << std::endl;
     out.close();
 }

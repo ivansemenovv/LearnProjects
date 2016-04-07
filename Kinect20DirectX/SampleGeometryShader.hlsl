@@ -16,12 +16,6 @@ cbuffer ModelConstantBuffer : register(b2)
 
 
 
-// Per-pixel color data passed through the pixel shader.
-struct PixelShaderInput
-{
-    float4 pos : SV_POSITION;
-    float3 color : COLOR0;
-};
 
 struct GeometryShaderInput
 {
@@ -33,18 +27,23 @@ struct GeometryShaderInput
 [maxvertexcount(24)]
 void main(
 	point GeometryShaderInput gsIn[1],
-	inout TriangleStream< PixelShaderInput > output
+	inout TriangleStream< GeometryShaderInput > output
 )
 {
 	// Create a cube around the point
     // It consists of vertices at the near top-left, near top right, ..., far top-left, far top right ....
-    PixelShaderInput ntl, ntr, nbr, nbl, ftl, ftr, fbr, fbl;
+    GeometryShaderInput ntl, ntr, nbr, nbl, ftl, ftr, fbr, fbl;
     
     ntl.color = 
         ntr.color = nbr.color = 
         nbl.color = ftl.color =
         ftr.color = fbr.color = 
         fbl.color = gsIn[0].color;
+    ntl.width =
+        ntr.width = nbr.width =
+        nbl.width = ftl.width =
+        ftr.width = fbr.width =
+        fbl.width = 0;
 
 
     float width2 = gsIn[0].width / 2;
