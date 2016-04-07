@@ -32,6 +32,7 @@
 #include <vector>
 #include <memory>
 #include <fstream>
+#include "ppl.h"
 
 
 using namespace DirectX;
@@ -65,17 +66,17 @@ XMMATRIX                g_Projection;
 Axis                    g_Axis;
 
 XMMATRIX firstKinect = {
-    0.999229,    0,    -0.0392598,    0,
-    -0.00154133,    0.999229,    -0.0392295,    0,
-    0.0392295,    0.0392598,    0.998459,    0,
-    -0.00615183,    0.028416,    0.161817,    1,
+    0.872496,    0,    0.488621,    0,
+    0.0191831,    0.999229,    -0.0342539,    0,
+    -0.488245,    0.0392598,    0.871824,    0,
+    -0.869433,    -0.021584,    1.04786,    1,
 };
 
 XMMATRIX secondKinect = {
-    -1.19209e-07,    0,    -1,    0,
+    0.678801,    0,    -0.734322,    0,
     0,    1,    0,    0,
-    1,    0,    -1.19209e-07,    0,
-    1.85,    -0.025,    -1.0875,    1,
+    0.734322,    0,    0.678801,    0,
+    1.18739,    -0.2,    1.44213,    1,
 };
 
 //KinectManager           g_Kinect;
@@ -656,6 +657,11 @@ HRESULT HandleKeyDown(WPARAM wParam)
         captureFrameCamera1 = true;
 
         break;
+
+    case VK_F2:
+        //capturedSnapshots.erase(capturedSnapshots.begin(), capturedSnapshots.end());
+        //moveableObjects.erase(++moveableObjects.begin(), moveableObjects.end());
+        break;
     
     case VK_ESCAPE:
         
@@ -742,7 +748,7 @@ void Render()
     // will render dynamic snapshots only if we didn't capture any of them
     if (capturedSnapshots.size() == 0)
     {
-        for (int i = 0; i < KINECT_NUMBER; i++)
+        Concurrency::parallel_for(0, KINECT_NUMBER, [](int i)
         {
             std::shared_ptr<CameraSnapshot> dynamiccamerasnapshot(new CameraSnapshot());
             if (dynamiccamerasnapshot->Initialize(g_pd3dDevice, g_NetworKinects[i], g_originTransformationMatrices[i]))
@@ -754,7 +760,7 @@ void Render()
                     moveableObjects.push_back(dynamiccamerasnapshot);
                 }
             }
-        }
+        });
 
         if (captureFrameCamera1) captureFrameCamera1 = false;
     }

@@ -10,9 +10,7 @@ KinectManager::KinectManager()
 float CalculateVoxelSize(float nearPlane, float fov, int hRes, int vRes, float voxelDistance)
 {
     // Calculate how long the near plane would be in world space
-    float lengthOfNearPlane = 2 * (nearPlane / tan(fov / 2));
-
-    float aspectRatio = (float)hRes / vRes;
+    float lengthOfNearPlane = 2 * (nearPlane / tan(XMConvertToRadians(fov) / 2));
 
     // Calculate how bix the voxel would be to make up one pixel's space
     float voxelWidthAtNearPlane = lengthOfNearPlane / hRes;
@@ -99,7 +97,7 @@ void KinectManager::ThreadProc()
                 //OutputDebugStringW(L"Camera point is out of range");
                 continue;
             }
-            //if (cameraPoint.Z >= 2) continue;
+            if (cameraPoint.Z >= 2) continue;
             int colorIndex = (int)colorPoint.X + colorwidth*(int)colorPoint.Y;
             tempReadVoxelBuffer[i] =
                 Voxel(

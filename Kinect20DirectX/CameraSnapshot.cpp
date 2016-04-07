@@ -109,7 +109,7 @@ void CameraSnapshot::Draw(ID3D11DeviceContext * pImmediateContext)
 
 void CameraSnapshot::DumpTransformationMatrix(std::string& dirPath)
 {
-    std::ofstream out(dirPath + m_serverAddress + ".txt", std::ofstream::ate);
+    std::ofstream out(dirPath + m_serverAddress + ".txt");
 
     out << "IP Address of kinect: "<< m_serverAddress << std::endl;
 
