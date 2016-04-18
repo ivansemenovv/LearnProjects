@@ -212,3 +212,5 @@ _Pvt_Extensions/
 ModelManifest.xml
 *.db
 *.opendb
+/liblzf-3.6
+/lz4mt-master
